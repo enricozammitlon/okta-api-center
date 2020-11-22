@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
 
 	<meta charset='utf-8' />
@@ -9,25 +10,25 @@
 
 	<title>Okta API Center</title>
 
-	<link rel="shortcut icon" href="https://www.okta.com/sites/all/themes/developer/favicon.ico" type="image/vnd.microsoft.icon" />
+	<link rel="shortcut icon" href="https://www.okta.com/sites/all/themes/developer/favicon.ico"
+		type="image/vnd.microsoft.icon" />
 
 	<!-- ******* CSS *******************-->
 
 	<!-- BOOTSTRAP CSS -->
-	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
 	<!-- ******* JAVASCRIPT *******************-->
 
-	<script
-	  src="https://code.jquery.com/jquery-3.2.1.min.js"
-	  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-	  crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+		integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
 
-	<script src = 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+	<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
 
-	<script src = 'https://ok1static.oktacdn.com/assets/js/sdk/okta-signin-widget/2.9.0/js/okta-sign-in.min.js'></script>
+	<script src='https://ok1static.oktacdn.com/assets/js/sdk/okta-signin-widget/2.9.0/js/okta-sign-in.min.js'></script>
 
-	<script src = 'https://ok1static.oktacdn.com/assets/js/sdk/okta-auth-js/1.8.0/okta-auth-js.min.js'></script>
+	<script src='https://ok1static.oktacdn.com/assets/js/sdk/okta-auth-js/1.8.0/okta-auth-js.min.js'></script>
 
 	<script>
 
@@ -61,7 +62,7 @@
 			$.ajax({
 				type: 'POST',
 				url: '/endSession',
-				success: function(data) {
+				success: function (data) {
 					console.log("server-side access token cleared.")
 					signIn.session.close(function (err) {
 						if (err) {
@@ -75,7 +76,7 @@
 			})
 		}
 
-		window.onload = function() {
+		window.onload = function () {
 
 			var gateway = '{{GATEWAY}}'
 
@@ -118,246 +119,253 @@
 
 	<script>
 
-	function getParams(hash) {
+		function getParams(hash) {
 
-		var arr = hash.split("&");
+			var arr = hash.split("&");
 
-		var params = {};
+			var params = {};
 
-		// convert the url params to an object
-		for (var i = 0; i < arr.length; i++) {
-			var kvp = arr[i].split("=");
-			params[kvp[0]] = kvp[1];
+			// convert the url params to an object
+			for (var i = 0; i < arr.length; i++) {
+				var kvp = arr[i].split("=");
+				params[kvp[0]] = kvp[1];
+			}
+
+			return params;
 		}
 
-		return params;
-	}
+		function getAccessToken(code) {
 
-	function getAccessToken(code) {
+			$.ajax({
+				type: 'POST',
+				data: JSON.stringify({ "code": code }),
+				contentType: 'application/json',
+				url: '/getAccessToken',
+				success: function (data) {
+					var obj = JSON.parse(data)
 
-		$.ajax({
-			type: 'POST',
-			data: JSON.stringify({ "code": code}),
-			contentType: 'application/json',
-			url: '/getAccessToken',
-			success: function(data) {
-				var obj = JSON.parse(data)
+					console.log("access token:")
+					console.log(obj.access_token)
 
-				console.log("access token:")
-				console.log(obj.access_token)
+					console.log("id token:")
+					console.log(obj.id_token)
 
-				console.log("id token:")
-				console.log(obj.id_token)
+					$("#access_token_decoded").html("<pre>" + JSON.stringify(obj.access_token_decoded, null, 1) + "</pre>")
 
-				$("#access_token_decoded").html("<pre>" + JSON.stringify(obj.access_token_decoded, null, 1) + "</pre>")
-
-				$("#id_token_decoded").html("<pre>" + JSON.stringify(obj.id_token_decoded, null, 1) + "</pre>")
-			}
-		});
-	}
-
-	// make a request to the API gateway
-	// request will go to the server-side app first so the app can include the access token
-	function getData(endpoint) {
-
-		$.ajax({
-			type: 'POST',
-			data: JSON.stringify({ "endpoint": endpoint }),
-			contentType: 'application/json',
-			url: '/getData',
-			success: function(data) {
-				console.dir(data)
-
-				var obj
-
-				if (typeof data === 'object') { obj = data }
-				else { obj = JSON.parse(data) }
-
-				$("#results_" + endpoint).html("<pre>" + JSON.stringify(obj, null, 1) + "</pre>");
-			}
-		})
-	}
-
-	function getNonce() {
-		var text = "";
-		var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-		for (var i = 0; i < 12; i++)
-			text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-		return text;
-	}
-
-	function redirectToOkta(level) {
-		var uri = '{{ISSUER}}/v1/authorize?response_type=code&client_id={{CLIENT_ID}}&redirect_uri={{REDIRECT_URI}}&response_mode=fragment'
-
-		uri += '&state=' + getNonce()
-		uri += '&nonce=' + getNonce()
-		uri += '&prompt=login&scope=openid'
-
-		if (gateway == "TYK") {}
-		else {
-			if (level === "silver" || level === "gold") { uri += " http://myapp.com/scp/silver"; };
-
-			if (level === "gold") { uri += " http://myapp.com/scp/gold"; }
+					$("#id_token_decoded").html("<pre>" + JSON.stringify(obj.id_token_decoded, null, 1) + "</pre>")
+				}
+			});
 		}
 
-		localStorage.setItem("authURI", uri);
+		// make a request to the API gateway
+		// request will go to the server-side app first so the app can include the access token
+		function getData(endpoint) {
 
-		console.log("authn URI: " + uri);
+			$.ajax({
+				type: 'POST',
+				data: JSON.stringify({ "endpoint": endpoint }),
+				contentType: 'application/json',
+				url: '/getData',
+				success: function (data) {
+					console.dir(data)
 
-		window.location = uri;
-	}
+					var obj
+
+					if (typeof data === 'object') { obj = data }
+					else { obj = JSON.parse(data) }
+
+					$("#results_" + endpoint).html("<pre>" + JSON.stringify(obj, null, 1) + "</pre>");
+				}
+			})
+		}
+
+		function getNonce() {
+			var text = "";
+			var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+			for (var i = 0; i < 12; i++)
+				text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+			return text;
+		}
+
+		function redirectToOkta(level) {
+			var uri = '{{ISSUER}}/v1/authorize?response_type=code&client_id={{CLIENT_ID}}&redirect_uri={{REDIRECT_URI}}&response_mode=fragment'
+
+			uri += '&state=' + getNonce()
+			uri += '&nonce=' + getNonce()
+			uri += '&prompt=login&scope=openid'
+
+			if (gateway == "TYK") { }
+			else {
+				if (level === "silver" || level === "gold") { uri += " http://myapp.com/scp/customer"; };
+
+				if (level === "gold") { uri += " http://myapp.com/scp/merchant"; }
+			}
+
+			localStorage.setItem("authURI", uri);
+
+			console.log("authn URI: " + uri);
+
+			window.location = uri;
+		}
 
 	</script>
 </head>
 
 <body>
-<!-- Wrapper -->
-<div class="container">
+	<!-- Wrapper -->
+	<div class="container">
 
-	<!-- Static navbar -->
-	<nav class="navbar navbar-default">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-					<span class="sr-only">Toggle navigation</span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				<a class="navbar-brand" href="/">Okta API Center</a>
+		<!-- Static navbar -->
+		<nav class="navbar navbar-default">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+						aria-expanded="false" aria-controls="navbar">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="/">Okta API Center</a>
+				</div>
+				<div id="navbar" class="navbar-collapse collapse">
+					<ul class="nav navbar-nav">
+						<li><a href="#" onclick="log_out()">Log out / Reload</a></li>
+					</ul>
+
+					<ul class="nav navbar-nav navbar-right">
+					</ul>
+
+				</div>
+				<!--/.nav-collapse -->
 			</div>
-			<div id="navbar" class="navbar-collapse collapse">
-				<ul class="nav navbar-nav">
-					<li><a href="#" onclick="log_out()">Log out / Reload</a></li>
-				</ul>
+			<!--/.container-fluid -->
+		</nav>
 
-				<ul class="nav navbar-nav navbar-right">
-				</ul>
+		<div class="well" style="background-color: rgb(234, 239, 247)">
+			<div class="row" style="vertical-align: top">
+				<div class="col-md-6" style="vertical-align: top">
 
-			</div><!--/.nav-collapse -->
-		</div><!--/.container-fluid -->
-	</nav>
+					<p><i>The currently logged-in Okta user is: <span id="username" style="font-weight: bold"></span></i></p>
 
-	<div class="well" style="background-color: rgb(234, 239, 247)">
-		<div class="row" style="vertical-align: top">
-			<div class="col-md-6" style="vertical-align: top">
+					<p><i>The gateway is: <span id="gateway" style="font-weight: bold"></span></i></p>
 
-				<p><i>The currently logged-in Okta user is: <span id = "username" style = "font-weight: bold"></span></i></p>
+					<div class="panel panel-info" id="bronze_panel" style="display:none;">
+						<div class="panel-heading">
+							BRONZE Access: A list of (selected) asteroids
+						</div>
+						<div class="panel-body">
+							<div class="row">
+								<div style="text-align: center; padding-top: 5px; padding-bottom: 5px">
+									<button type="button" class="btn btn-default" onclick="redirectToOkta('bronze')">authenticate</button>
+								</div>
 
-				<p><i>The gateway is: <span id = "gateway" style = "font-weight: bold"></span></i></p>
-
-				<div class = "panel panel-info" id = "bronze_panel" style = "display:none;">
-					<div class = "panel-heading">
-						BRONZE Access: A list of (selected) asteroids
-					</div>
-					<div class = "panel-body">
-						<div class = "row">
-							<div style= "text-align: center; padding-top: 5px; padding-bottom: 5px">
-								<button type="button" class="btn btn-default" onclick="redirectToOkta('bronze')">authenticate</button>
 							</div>
 
+							<span id="asteroidsLink">proxy endpoint: <span class="proxy_uri">{{GATEWAY_URI}}/asteroids</span>
+
+								<div style="text-align: center; padding-top: 10px">
+									<button type="button" class="btn btn-info" onclick="getData('asteroids')">show me some
+										asteroids!</button>
+								</div>
+
+								<div class="panel panel-primary" style="margin-top:10px">
+									<div class="panel-heading">
+										<h3 class="panel-title">Asteroids</h3>
+									</div>
+									<div class="panel-body" id="results_asteroids"></div>
+								</div>
 						</div>
+					</div>
 
-						<span id = "asteroidsLink">proxy endpoint: <span class = "proxy_uri">{{GATEWAY_URI}}/asteroids</span>
-
-						<div style= "text-align: center; padding-top: 10px">
-							<button type="button" class="btn btn-info" onclick="getData('asteroids')">show me some asteroids!</button>
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							SILVER Access: A list of the planets
 						</div>
+						<div class="panel-body">
+							<div class="row">
+								<div style="text-align: center; padding-top: 5px; padding-bottom: 5px">
+									<button type="button" class="btn btn-default" onclick="redirectToOkta('silver')">authenticate</button>
+								</div>
 
-						<div class="panel panel-primary" style ="margin-top:10px">
-							<div class="panel-heading">
-								<h3 class="panel-title">Asteroids</h3>
 							</div>
-							<div class="panel-body" id = "results_asteroids"></div>
+
+							<span id="planetsLink">proxy endpoint: <span class="proxy_uri">{{GATEWAY_URI}}/planets</span>
+
+								<div style="text-align: center; padding-top: 10px">
+									<button type="button" class="btn btn-info" onclick="getData('planets')">show me the planets!</button>
+								</div>
+
+								<div class="panel panel-primary" style="margin-top:10px">
+									<div class="panel-heading">
+										<h3 class="panel-title">Planets</h3>
+									</div>
+									<div class="panel-body" id="results_planets"></div>
+								</div>
 						</div>
 					</div>
-				</div>
 
-				<div class = "panel panel-default">
-					<div class = "panel-heading">
-						SILVER Access: A list of the planets
-					</div>
-					<div class = "panel-body">
-						<div class = "row">
-							<div style= "text-align: center; padding-top: 5px; padding-bottom: 5px">
-								<button type="button" class="btn btn-default" onclick="redirectToOkta('silver')">authenticate</button>
+					<div class="panel panel-warning">
+						<div class="panel-heading">
+							GOLD Access: A list of (selected) moons
+						</div>
+						<div class="panel-body">
+							<div class="row">
+
+								<div style="text-align: center; padding-top: 5px; padding-bottom: 5px">
+									<button type="button" class="btn btn-warning" onclick="redirectToOkta('gold')">authenticate</button>
+								</div>
 							</div>
+							<span id="moonsLink">proxy endpoint: <span class="proxy_uri">{{GATEWAY_URI}}/moons</span>
 
-						</div>
+								<div style="text-align: center; padding-top: 10px">
+									<button type="button" class="btn btn-info" onclick="getData('moons')">show me some moons!</button>
+								</div>
 
-						<span id = "planetsLink">proxy endpoint: <span class = "proxy_uri">{{GATEWAY_URI}}/planets</span>
+								<div class="panel panel-primary" style="margin-top:10px">
+									<div class="panel-heading">
+										<h3 class="panel-title">Moons</h3>
+									</div>
+									<div class="panel-body" id="results_moons"></div>
+								</div>
 
-						<div style= "text-align: center; padding-top: 10px">
-							<button type="button" class="btn btn-info" onclick="getData('planets')">show me the planets!</button>
-						</div>
-
-						<div class="panel panel-primary" style ="margin-top:10px">
-							<div class="panel-heading">
-								<h3 class="panel-title">Planets</h3>
-							</div>
-							<div class="panel-body" id = "results_planets"></div>
 						</div>
 					</div>
-				</div>
+				</div> <!-- end left col -->
 
-				<div class = "panel panel-warning">
-					<div class = "panel-heading">
-						GOLD Access: A list of (selected) moons
-					</div>
-					<div class = "panel-body">
-						<div class = "row">
+				<div class="col-md-6">
 
-							<div style= "text-align: center; padding-top: 5px; padding-bottom: 5px">
-								<button type="button" class="btn btn-warning" onclick="redirectToOkta('gold')">authenticate</button>
-							</div>
+					<div class="panel panel-primary">
+						<div class="panel-heading"><b>The OAuth flow</b></div>
+
+						<div class="panel-body" id="">
+							<ul>
+								<li>The user is authenticating using the authorization code grant type.</li>
+								<li>After authentication, you can see the authorization code in the address bar, and it's also in the
+									developer console.</li>
+								<li>The access token and id token are availabile in the console. These would not typically be sent to
+									the browser in an authorization code flow, unless you're using PKCE.</li>
+								<li>They are shown here for demo purposes.</li>
 						</div>
-						<span id = "moonsLink">proxy endpoint: <span class = "proxy_uri">{{GATEWAY_URI}}/moons</span>
-
-						<div style= "text-align: center; padding-top: 10px">
-							<button type="button" class="btn btn-info" onclick="getData('moons')">show me some moons!</button>
-						</div>
-
-						<div class="panel panel-primary" style ="margin-top:10px">
-							<div class="panel-heading">
-								<h3 class="panel-title">Moons</h3>
-							</div>
-							<div class="panel-body" id = "results_moons"></div>
-						</div>
-
 					</div>
-				</div>
-			</div> <!-- end left col -->
 
-			<div class="col-md-6">
-
-				<div class = "panel panel-primary">
-					<div class = "panel-heading"><b>The OAuth flow</b></div>
-
-					<div class = "panel-body" id="">
-						<ul>
-						<li>The user is authenticating using the authorization code grant type.</li>
-						<li>After authentication, you can see the authorization code in the address bar, and it's also in the developer console.</li>
-						<li>The access token and id token are availabile in the console. These would not typically be sent to the browser in an authorization code flow, unless you're using PKCE.</li>
-						<li>They are shown here for demo purposes.</li>
+					<div class="panel panel-success" id="access_token_div">
+						<div class="panel-heading">Access token, decoded:</div>
+						<div class="panel-body" id="access_token_decoded">[none]</div>
 					</div>
-				</div>
 
-				<div class = "panel panel-success" id="access_token_div">
-					<div class = "panel-heading">Access token, decoded:</div>
-					<div class = "panel-body" id="access_token_decoded">[none]</div>
-				</div>
+					<div class="panel panel-success" id="id_token_div">
+						<div class="panel-heading">ID token, decoded:</div>
+						<div class="panel-body" id="id_token_decoded">[none]</div>
+					</div>
 
-				<div class = "panel panel-success" id="id_token_div">
-					<div class = "panel-heading">ID token, decoded:</div>
-					<div class = "panel-body" id="id_token_decoded">[none]</div>
 				</div>
-
 			</div>
 		</div>
-	</div>
 
-</div>
+	</div>
 </body>
+
 </html>
